@@ -1,0 +1,95 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+print("Program Started...\n")
+
+# ---------------- STEP 1: LOAD DATA ----------------
+data = pd.read_csv("c:/users/anush/OneDrive/Documents/student_performance_dataset.csv")
+
+print("Dataset Loaded Successfully!")
+print("\nFirst 5 rows:\n", data.head())
+
+# ---------------- STEP 2: PREPROCESSING ----------------
+data['Result'] = data['Result'].map({'Pass': 1, 'Fail': 0})
+print("\nPreprocessing Done!")
+
+# ---------------- STEP 3: EDA (SAVE GRAPH) ----------------
+plt.figure(figsize=(10,4))
+
+plt.subplot(1,2,1)
+plt.scatter(data['Study_Hours'], data['Final_Score'])
+plt.title("Study Hours vs Final Score")
+
+plt.subplot(1,2,2)
+sns.boxplot(x='Result', y='Attendance', data=data)
+plt.title("Attendance vs Result")
+
+plt.tight_layout()
+plt.show()
+plt.savefig("graph.png")   # saves graph
+plt.close()
+
+print("\nGraph saved as graph.png")
+
+# ---------------- STEP 4: FEATURE SELECTION ----------------
+X = data[['Study_Hours', 'Attendance', 'Internal_Marks']]
+y = data['Result']
+
+print("\nFeature Selection Done!")
+
+# ---------------- STEP 5: SPLIT DATA ----------------
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+print("\nData Split Done!")
+
+# ---------------- STEP 6: MODEL ----------------
+from sklearn.linear_model import LogisticRegression
+
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+print("\nModel Training Done!")
+
+# ---------------- STEP 7: PREDICTION ----------------
+y_pred = model.predict(X_test)
+
+new_student = pd.DataFrame([[6, 85, 75]],
+                          columns=['Study_Hours','Attendance','Internal_Marks'])
+
+prediction = model.predict(new_student)
+
+print("\nNew Student Prediction:",
+      "PASS" if prediction[0] == 1 else "FAIL")
+
+# ---------------- STEP 8: EVALUATION ----------------
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+print("\nAccuracy:", accuracy_score(y_test, y_pred))
+
+print("\nConfusion Matrix:\n", confusion_matrix(y_test, y_pred))
+
+print("\nClassification Report:\n",
+      classification_report(y_test, y_pred, zero_division=0))
+
+# ---------------- STEP 9: AT-RISK STUDENTS ----------------
+all_predictions = model.predict(X)
+
+data['Predicted_Result'] = all_predictions
+
+at_risk_students = data[data['Predicted_Result'] == 0]
+
+print("\nAt-Risk Students:\n")
+print(at_risk_students[['Student_ID','Study_Hours','Attendance','Internal_Marks']])
+
+# Save at-risk students
+at_risk_students.to_excel("at_risk_students.xlsx", index=False)
+
+print("\nAt-risk students saved as at_risk_students.xlsx")
+
+print("\nProgram Finished Successfully!")
+
+
